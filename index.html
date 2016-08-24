@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Google maps</title>
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.css">
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+        <link rel="stylesheet" href="main.css" media="screen" title="no title" charset="utf-8">
+        <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+    </head>
+    <body>
+        <template id="map-template">
+            <div id="map" v-el:map></div>
+        </template>
+
+        <template id="alert-template">
+            <div    :class="alertClasses" class="animated no-margin no-border-radius"
+                    v-show="show"
+                    transition="slide-vertical"
+            >
+                <slot></slot>
+                <button type="button" class="close" aria-label="Close">
+                    <span aria-hidden="true" @click="show = false">&times;</span>
+                </button>
+            </div>
+        </template>
+
+        <!--END OF TEMPLATES -->
+
+        <div id="app" class="container-fluid">
+
+            <div class="toggle-aside toggle-aside-right bg-primary v-center" @click="showInfo = !showInfo">
+                <span class="glyphicon glyphicon-info-sign text-center"></span>
+            </div>
+            <div class="toggle-aside toggle-aside-left bg-primary v-center" @click="showDirectionSteps = !showDirectionSteps">
+                <span class="glyphicon glyphicon-send text-center"></span>
+            </div>
+            <aside
+                :show.sync="showDirectionSteps"
+                header="Steps"
+                placement="left"
+            >
+            <div id="direction-steps"></div>
+            </aside>
+            <aside
+                :show.sync="showInfo"
+                header="Hello! :)"
+                placement="right"
+            >
+                <h4 class="text-primary">My Next</h4>
+                <p>If the 'My Next' checkbox is checked, only one random result will be marked in the map.</p>
+                <hr>
+                <h4 class="text-primary">Travel Method</h4>
+                <p>Are you driving, walking or using public transport? Determines the route for the directions.</p>
+                <hr>
+                <h4 class="text-primary">Radius</h4>
+                <p>Simply the radius of the search in meters. Range is 50-3000m. The circle in the map represents the radius.</p>
+                <hr>
+                <h4 class="text-primary">Type</h4>
+                <p>Choose the type of the place you would like to visit.</p>
+                <hr>
+                <h4 class="text-primary">Location</h4>
+                <p>You can manually set your location in the map with this. Just type e.g. your current address, street, building etc. Just try :)</p>
+            </aside>
+            <!--
+            <alert type="info" important>
+                <strong>Hey! </strong>Drag the green marker to change your position. Geolocation is not always accurate :/
+            </alert>
+            -->
+            <form class="search form-inline">
+                <div class="animated" v-show="showSearch" transition="flip-x">
+                    <div class="form-group">
+                        <tooltip
+                            placement="bottom"
+                            content="Only get one random result."
+                        >
+                            <div class="form-control">
+                                <input type="checkbox" v-model="randomResult"> My Next {{ placeType | toSpaces _ | capitalize }}
+                            </div>
+                        </tooltip>
+                    </div>
+                    <div class="form-group">
+                        <tooltip
+                            placement="bottom"
+                            content="Your method of travel."
+                        >
+                            <div class="form-control">
+                                <label>
+                                    <input type="radio" id="travelmode-walking" value="WALKING" v-model="travelMode"> Walking
+                                </label>
+                                <label>
+                                    <input type="radio" id="travelmode-driving" value="DRIVING" v-model="travelMode"> Driving
+                                </label>
+                                <label>
+                                    <input type="radio" id="travelmode-transit" value="TRANSIT" v-model="travelMode"> Transit
+                                </label>
+                            </div>
+                        </tooltip>
+                    </div>
+                    <div class="form-group">
+                        <tooltip
+                            placement="bottom"
+                            content="Enter the radius in meters between 50-3000."
+                        >
+                            <div class="input-group">
+                                <input class="form-control" type="number" id="radius" v-model="radius" number debounce="500">
+                                <span class="input-group-addon">Radius</span>
+                            </div>
+                        </tooltip>
+                    </div>
+                    <div class="form-group">
+                        <tooltip
+                            placement="bottom"
+                            content="Select which type of places you want to see."
+                        >
+                            <div class="input-group">
+                                <select class="form-control" placeholder="Place Type" v-el:placeType name="type" id="type" v-model="placeType">
+                                    <option value="">All</option>
+                                    <option value="accounting">Accounting</option>
+                                    <option value="airport">Airport</option>
+                                    <option value="amusement_park">Amusement Park</option>
+                                    <option value="aquarium">Aquarium</option>
+                                    <option value="art_gallery">Art Gallery</option>
+                                    <option value="atm">ATM</option>
+                                    <option value="bakery">Bakery</option>
+                                    <option value="bank">Bank</option>
+                                    <option value="bar">Bar</option>
+                                    <option value="beauty_salon">Beauty Salon</option>
+                                    <option value="bicycle_store">Bicycle Store</option>
+                                    <option value="book_store">Book Store</option>
+                                    <option value="bowling_alley">Bowling Alley</option>
+                                    <option value="bus_station">Bus Station</option>
+                                    <option value="cafe">Cafe</option>
+                                    <option value="campground">Campground</option>
+                                    <option value="car_dealer">Car Dealer</option>
+                                    <option value="car_rental">Car Rental</option>
+                                    <option value="car_repair">Car Repair</option>
+                                    <option value="car_wash">Car Wash</option>
+                                    <option value="casino">Casino</option>
+                                    <option value="cemetery">Cemetery</option>
+                                    <option value="church">Church</option>
+                                    <option value="city_hall">City Hall</option>
+                                    <option value="clothing_store">Clothing Store</option>
+                                    <option value="convenience_store">Convenience Store</option>
+                                    <option value="courthouse">Courthouse</option>
+                                    <option value="dentist">Dentist</option>
+                                    <option value="department_store">Department Store</option>
+                                    <option value="doctor">Doctor</option>
+                                    <option value="electrician">Electrician</option>
+                                    <option value="electronics_store">Electronics Store</option>
+                                    <option value="embassy">Embassy</option>
+                                    <option value="fire_station">Fire Station</option>
+                                    <option value="florist">Florist</option>
+                                    <option value="food">Food</option>
+                                    <option value="funeral_home">Funeral Home</option>
+                                    <option value="furniture_store">Furniture_store</option>
+                                    <option value="gas_station">Gas Station</option>
+                                    <option value="general_contractor">General Contractor</option>
+                                    <option value="grocery_or_supermarket">Grocery or Supermarket</option>
+                                    <option value="gym">Gym</option>
+                                    <option value="hair_care">Hair Care</option>
+                                    <option value="hardware_store">Hardware Store</option>
+                                    <option value="health">Health</option>
+                                    <option value="hindu_temple">Hindu Temple</option>
+                                    <option value="home_goods_store">Home Goods Store</option>
+                                    <option value="hospital">Hospital</option>
+                                    <option value="insurance_agency">Insurance Agency</option>
+                                    <option value="jewelry_store">Jewelry Store</option>
+                                    <option value="laundry">Laundry</option>
+                                    <option value="lawyer">Lawyer</option>
+                                    <option value="library">Library</option>
+                                    <option value="liquor_store">Liquor Store</option>
+                                    <option value="local_government_office">Local Government Office</option>
+                                    <option value="locksmith">Locksmith</option>
+                                    <option value="lodging">Lodging</option>
+                                    <option value="meal_delivery">Meal Delivery</option>
+                                    <option value="meal_takeaway">Meal Takeaway</option>
+                                    <option value="mosque">Mosque</option>
+                                    <option value="movie_rental">Movie Rental</option>
+                                    <option value="movie_theater">Movie Theater</option>
+                                    <option value="moving_company">Moving Company</option>
+                                    <option value="museum">Museum</option>
+                                    <option value="night_club">Night Club</option>
+                                    <option value="painter">Painter</option>
+                                    <option value="park">Park</option>
+                                    <option value="parking">Parking</option>
+                                    <option value="pet_store">Pet Store</option>
+                                    <option value="pharmacy">Pharmacy</option>
+                                    <option value="physiotherapist">Physiotherapist</option>
+                                    <option value="place_of_worship">Place of Worship</option>
+                                    <option value="plumber">Plumber</option>
+                                    <option value="police">Police</option>
+                                    <option value="post_office">Post Office</option>
+                                    <option value="real_estate_agency">Real Estate Agency</option>
+                                    <option value="restaurant">Restaurant</option>
+                                    <option value="roofing_contractor">Roofing Contractor</option>
+                                    <option value="rv_park">RV Park</option>
+                                    <option value="school">School</option>
+                                    <option value="shoe_store">Shoe Store</option>
+                                    <option value="shopping_mall">Shopping Mall</option>
+                                    <option value="spa">Spa</option>
+                                    <option value="stadium">Stadium</option>
+                                    <option value="storage">Storage</option>
+                                    <option value="store">Store</option>
+                                    <option value="subway_station">Subway Station</option>
+                                    <option value="synagogue">Synagogue</option>
+                                    <option value="taxi_stand">Taxi Stand</option>
+                                    <option value="train_station">Train Station</option>
+                                    <option value="transit_station">Transit Station</option>
+                                    <option value="travel_agency">Travel Agency</option>
+                                    <option value="university">University</option>
+                                    <option value="veterinary_care">Veterinary Care</option>
+                                    <option value="zoo">Zoo</option>
+                                </select>
+                                <span class="input-group-addon">Type</span>
+                            </div>
+                        </tooltip>
+                    </div>
+                    <div class="form-group">
+                        <tooltip
+                        placement="bottom"
+                        content="You can manually set your location. Just type an address, city, monument etc. Just try :)"
+                        >
+                        <div class="input-group">
+                            <input  class="form-control" type="text" id="address" v-model="address" placeholder="123 Example st." debounce="2000">
+                            <span class="input-group-addon">Location</span>
+                        </div>
+                    </tooltip>
+                </div>
+            </div>
+            <div class="toggle-search v-center" @click="showSearch = !showSearch">
+                <span class="glyphicon-eye-open glyphicon text-center"></span>
+            </div>
+            </form>
+
+            <map
+                :address="address"
+                :radius="radius"
+                :place-type="placeType"
+                :random-result="randomResult"s
+                :travel-mode="travelMode"
+                :show-direction-steps.sync="showDirectionSteps"
+            >
+            </map>
+
+        </div>
+
+        <script src="//cdnjs.cloudflare.com/ajax/libs/vue/1.0.26/vue.js" charset="utf-8"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/vue-strap/1.0.11/vue-strap.js" charset="utf-8"></script>
+        <script src="main.js" charset="utf-8"></script>
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDQ4K0NZVXFQ6kD3vXvgJeVLAFO4x9YhoU&callback=app.init&libraries=places" async defer></script>
+    </body>
+</html>
