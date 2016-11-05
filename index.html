@@ -79,7 +79,7 @@
                             content="Only get one random result."
                         >
                             <div class="form-control">
-                                <input type="checkbox" v-model="randomResult"> My Next {{ placeType | toSpaces _ | capitalize }}
+                                <input type="checkbox" :disabled="controlsDisabled" v-model="randomResult"> My Next {{ placeType | toSpaces _ | capitalize }}
                             </div>
                         </tooltip>
                     </div>
@@ -90,13 +90,13 @@
                         >
                             <div class="form-control">
                                 <label>
-                                    <input type="radio" id="travelmode-walking" value="WALKING" v-model="travelMode"> Walking
+                                    <input type="radio" id="travelmode-walking" value="WALKING" :disabled="controlsDisabled" v-model="travelMode"> Walking
                                 </label>
                                 <label>
-                                    <input type="radio" id="travelmode-driving" value="DRIVING" v-model="travelMode"> Driving
+                                    <input type="radio" id="travelmode-driving" value="DRIVING" :disabled="controlsDisabled" v-model="travelMode"> Driving
                                 </label>
                                 <label>
-                                    <input type="radio" id="travelmode-transit" value="TRANSIT" v-model="travelMode"> Transit
+                                    <input type="radio" id="travelmode-transit" value="TRANSIT" :disabled="controlsDisabled" v-model="travelMode"> Transit
                                 </label>
                             </div>
                         </tooltip>
@@ -107,7 +107,7 @@
                             content="Enter the radius in meters between 50-3000."
                         >
                             <div class="input-group">
-                                <input class="form-control" type="number" id="radius" v-model="radius" number debounce="500">
+                                <input class="form-control" type="number" id="radius" :disabled="controlsDisabled" v-model="radius" number debounce="2000">
                                 <span class="input-group-addon">Radius</span>
                             </div>
                         </tooltip>
@@ -118,7 +118,7 @@
                             content="Select which type of places you want to see."
                         >
                             <div class="input-group">
-                                <select class="form-control" placeholder="Place Type" v-el:placeType name="type" id="type" v-model="placeType">
+                                <select class="form-control" placeholder="Place Type" :disabled="controlsDisabled" v-el:placeType name="type" id="type" v-model="placeType">
                                     <option value="">All</option>
                                     <option value="accounting">Accounting</option>
                                     <option value="airport">Airport</option>
@@ -226,7 +226,7 @@
                         content="You can manually set your location. Just type an address, city, monument etc. Just try :)"
                         >
                         <div class="input-group">
-                            <input  class="form-control" type="text" id="address" v-model="address" placeholder="123 Example st." debounce="2000">
+                            <input  class="form-control" type="text" id="address" :disabled="controlsDisabled" v-model="address" placeholder="123 Example st." debounce="2000">
                             <span class="input-group-addon">Location</span>
                         </div>
                     </tooltip>

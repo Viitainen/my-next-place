@@ -122,6 +122,7 @@ Vue.component('map', {
 
     methods: {
         createMap: function() {
+
             this.infowindow = new google.maps.InfoWindow();
             this.directionsService = new google.maps.DirectionsService();
             this.directionsDisplay = new google.maps.DirectionsRenderer({
@@ -138,7 +139,7 @@ Vue.component('map', {
             });
 
             this.directionsDisplay.setMap(this.map);
-
+            this.placesService = new google.maps.places.PlacesService(this.map);
             var locationInput = document.getElementById('address');
             new google.maps.places.Autocomplete(locationInput);
         },
@@ -195,7 +196,6 @@ Vue.component('map', {
             };
             var vm = this;
             this.directionsService.route(request, function(result, status) {
-                console.log(result.routes[0].legs[0].distance.text);
                 if(status == 'OK') {
                     vm.directionsDisplay.setDirections(result);
                     vm.showDirectionSteps = true;
@@ -230,11 +230,12 @@ Vue.component('map', {
         },
 
         getNearbyPlaces: function() {
-            var service = new google.maps.places.PlacesService(this.map);
+            this.$dispatch('SearchStarted');
+            //var service = new google.maps.places.PlacesService(this.map);
             this.clearPlaceMarkers();
 
             var vm = this;
-            service.nearbySearch({
+            this.placesService.nearbySearch({
                 location: this.userLocation,
                 radius: this.radius,
                 type: this.placeType
@@ -242,7 +243,6 @@ Vue.component('map', {
                 if(status == google.maps.places.PlacesServiceStatus.OK) {
                     if(vm.randomResult) {
                         var rand = Math.floor(Math.random() * results.length);
-                        console.log(rand);
                         vm.createPlaceMarker(results[rand]);
                     } else {
                         for(var i = 0; i < results.length; i++) {
@@ -250,6 +250,8 @@ Vue.component('map', {
                         }
                     }
                 }
+
+                vm.$dispatch('SearchCompleted');
             });
 
             this.drawRadius();
@@ -337,6 +339,7 @@ Vue.component('map', {
         },
 
         locateAddress: function() {
+            this.$dispatch('SearchStarted');
             var geocoder = new google.maps.Geocoder();
             var vm = this;
 
@@ -352,6 +355,7 @@ Vue.component('map', {
                     //
                     // })
                 }
+                vm.$dispatch('SearchCompleted');
 
             });
         }
@@ -374,6 +378,7 @@ var app = new Vue({
         address: '',
         radius: 1000,
         placeType: '',
+        controlsDisabled: true,
         randomResult: false,
         showInfo: false,
         showDirectionSteps: false,
@@ -383,6 +388,7 @@ var app = new Vue({
 
     methods: {
         init: function() {
+            this.controlsDisabled = false;
             this.$broadcast('MapsApiLoaded');
         }
     },
@@ -402,7 +408,7 @@ var app = new Vue({
         },
 
         showDirectionSteps: function() {
-            console.log('changed');
+            //console.log('changed');
         },
 
         placeType: function() {
@@ -411,6 +417,16 @@ var app = new Vue({
 
         travelMode: function() {
             this.$broadcast('TravelModeChanged');
+        }
+    },
+
+    events: {
+        SearchStarted: function() {
+            this.controlsDisabled = true;
+        },
+
+        SearchCompleted: function() {
+            this.controlsDisabled = false;
         }
     }
 
